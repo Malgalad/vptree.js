@@ -17,6 +17,7 @@
 		this.tree = tree;
 
 		this.search = searchVPTree;
+		this.radiusSearch = searchInRadius;
 		this.comparisons = 0;
 		this.stringify = stringify;
 	}

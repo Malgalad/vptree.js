@@ -134,3 +134,71 @@
 	}
 
 
+
+	/*───────────────────────────────────────────────────────────────────────────┐
+	 │   vp-tree search in radius                                                │
+	 └───────────────────────────────────────────────────────────────────────────*/
+
+	/**
+	 * @param {Object} q query : any object the distance function can be applied to.
+	 * @param {number} τ maximum distance to neighbors
+	 *
+	 * @return {Array<Object>} list of search results, ordered by increasing distance to the query object.
+	 *						Each result has a property i which is the index of the element in S, and d which
+	 *						is its distance to the query object.
+	 */
+	function searchInRadius(q, τ) {
+		var W = new PriorityQueue(Infinity),
+			S = this.S,
+			distance = this.distance,
+			comparisons = 0;
+
+		function doSearch(node) {
+			if (node === null)
+				return;
+
+			if (node.length) {
+				for (var i = 0, n = node.length; i < n; i++) {
+					comparisons++;
+					var elementID = node[i],
+						element = S[elementID],
+						elementDist = distance(q, element);
+					if (elementDist < τ) {
+						W.insert(elementID, elementDist);
+					}
+				}
+				return;
+			}
+
+			var id = node.i,
+				p = S[id],
+				dist = distance(q, p);
+
+			comparisons++;
+
+			if (dist < τ)
+				W.insert(id, dist);
+
+			var μ = node.μ, L = node.L, R = node.R;
+
+			if (μ === undefined)
+				return;
+
+			if (dist < μ) {
+				if (L && node.m - τ < dist)
+					doSearch(L);
+				if (R && μ - τ < dist && dist < node.M + τ)
+					doSearch(R);
+			} else {
+				if (R && dist < node.M + τ)
+					doSearch(R);
+				if (L && node.m - τ < dist && dist < μ + τ)
+					doSearch(L);
+			}
+		}
+
+		doSearch(this.tree);
+		this.comparisons = comparisons;
+		return W.list();
+	}
+
